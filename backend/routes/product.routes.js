@@ -7,17 +7,26 @@ import {
 	getProductsByCategory,
 	getRecommendedProducts,
 	toggleFeaturedProduct,
+	getSellerProducts,
 } from "../controllers/product.controller.js";
-import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
+import { adminRoute, protectRoute, sellerOrAdminRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/", protectRoute, adminRoute, getAllProducts);
+//public routes
 router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductsByCategory);
 router.get("/recommendations", getRecommendedProducts);
-router.post("/", protectRoute, adminRoute, createProduct);
-router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
-router.delete("/:id", protectRoute, adminRoute, deleteProduct);
+
+// --- Admin Only Routes ---
+router.get("/", protectRoute, adminRoute, getAllProducts); // Admin gets all products
+router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct); // ONLY Admin can feature
+
+// --- Seller & Admin Routes ---
+router.post("/", protectRoute, sellerOrAdminRoute, createProduct); // Seller & Admin can create
+router.delete("/:id", protectRoute, sellerOrAdminRoute, deleteProduct); // Seller & Admin can delete
+
+// --- New Route for Sellers ---
+router.get("/my-products", protectRoute, sellerOrAdminRoute, getSellerProducts);
 
 export default router;

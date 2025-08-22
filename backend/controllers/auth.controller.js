@@ -142,3 +142,34 @@ export const getProfile = async (req, res) => {
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
 };
+
+export const setUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
+
+        if (!['user', 'seller', 'admin'].includes(role)) {
+            return res.status(400).json({ message: "Invalid role specified" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(id, { role }, { new: true }).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ message: `User role successfully updated to ${role}`, user: updatedUser });
+    } catch (error) {
+        console.log("Error in setUserRole controller", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).select("-password");
+        res.json({ users });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};

@@ -27,7 +27,7 @@ export const useProductStore = create((set) => ({
     }
   },
 
-  fetchAllProducts: async () => {
+  fetchAdminProducts: async () => {
     set({ loading: true });
     try {
       const response = await axios.get("/products");
@@ -38,6 +38,20 @@ export const useProductStore = create((set) => ({
     } catch (error) {
       const message =
         error.response?.data?.error || error.message || "Failed to fetch products";
+      set({ error: message, loading: false });
+      toast.error(message);
+    }
+  },
+
+  fetchSellerProducts: async () => {
+    set({ loading: true });
+    try {
+      const response = await axios.get("/products/my-products");
+      const payload = response.data.products ?? [];
+      set({ products: payload, loading: false, error: null });
+    } catch (error) {
+      const message =
+        error.response?.data?.error || error.message || "Failed to fetch your products";
       set({ error: message, loading: false });
       toast.error(message);
     }

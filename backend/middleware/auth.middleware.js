@@ -35,3 +35,11 @@ export const adminRoute = (req, res, next) => {
         return res.status(403).json({message: "Forbidden access, admin privileges required."});
     }
 }
+
+export const sellerOrAdminRoute = (req, res, next) => {
+    if (req.user && (req.user.role === 'seller' || req.user.role === 'admin')) {
+        next();
+    } else {
+        res.status(403).json({ message: "Not authorized. Seller or Admin access required." });
+    }
+};

@@ -4,8 +4,32 @@ import { toast } from "react-hot-toast";
 
 export const useUserStore = create((set, get) => ({
 	user: null,
+	users: [],
 	loading: false,
 	checkingAuth: true,
+
+	fetchAllUsers: async () => {
+        set({ loading: true });
+        try {
+            const res = await axios.get("/auth/users"); // This route needs to be created in the backend
+            set({ users: res.data.users, loading: false });
+        } catch (error) {
+            set({ loading: false });
+            toast.error(error.response?.data?.message || "Failed to fetch users");
+        }
+    },
+
+    updateUserRole: async (userId, role) => {
+        try {
+            const res = await axios.patch(`/auth/users/${userId}/role`, { role });
+            set((state) => ({
+                users: state.users.map((u) => (u._id === userId ? res.data.user : u)),
+            }));
+            toast.success(res.data.message);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update role");
+        }
+    },
 
 	signup: async ({ name, email, password, confirmPassword }) => {
 		set({ loading: true });
@@ -23,6 +47,7 @@ export const useUserStore = create((set, get) => ({
 			toast.error(error.response.data.message || "An error occurred");
 		}
 	},
+
 	login: async (email, password) => {
 		set({ loading: true });
 

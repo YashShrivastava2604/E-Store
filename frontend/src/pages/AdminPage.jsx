@@ -1,25 +1,52 @@
-import { BarChart, PlusCircle, ShoppingBasket } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BarChart, PlusCircle, ShoppingBasket, Users } from "lucide-react"; // Import Users icon
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 
 import AnalyticsTab from "../components/AnalyticsTab";
 import CreateProductForm from "../components/CreateProductForm";
 import ProductsList from "../components/ProductsList";
+import UsersTab from "../components/UsersTab"; // Import the new component
 import { useProductStore } from "../stores/useProductStore";
-
-const tabs = [
-	{ id: "create", label: "Create Product", icon: PlusCircle },
-	{ id: "products", label: "Products", icon: ShoppingBasket },
-	{ id: "analytics", label: "Analytics", icon: BarChart },
-];
+import { useUserStore } from "../stores/useUserStore"; // Import user store
 
 const AdminPage = () => {
 	const [activeTab, setActiveTab] = useState("create");
-	const { fetchAllProducts } = useProductStore();
+    const { user } = useUserStore(); // Get current user
+	const { fetchAdminProducts, fetchSellerProducts } = useProductStore();
+
+    const isAdmin = user?.role === 'admin';
+
+    // Dynamically define tabs based on user role
+    const tabs = useMemo(() => {
+        const baseTabs = [
+            { id: "create", label: "Create Product", icon: PlusCircle },
+            { id: "products", label: "My Products", icon: ShoppingBasket },
+        ];
+        if (isAdmin) {
+            return [
+                ...baseTabs,
+                { id: "analytics", label: "Analytics", icon: BarChart },
+                { id: "users", label: "Users", icon: Users },
+            ];
+        }
+        return baseTabs;
+    }, [isAdmin]);
+
+    // Set a default active tab if the current one is not available for the role
+    useEffect(() => {
+        if (!tabs.find(t => t.id === activeTab)) {
+            setActiveTab('create');
+        }
+    }, [tabs, activeTab]);
 
 	useEffect(() => {
-		fetchAllProducts();
-	}, [fetchAllProducts]);
+        // Fetch the correct set of products based on role
+		if (isAdmin) {
+            fetchAdminProducts();
+        } else {
+            fetchSellerProducts();
+        }
+	}, [isAdmin, fetchAdminProducts, fetchSellerProducts]);
 
 	return (
 		<div className='min-h-screen relative overflow-hidden'>
@@ -30,15 +57,16 @@ const AdminPage = () => {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.8 }}
 				>
-					Admin Dashboard
+					{/* Dynamic Title */}
+                    {isAdmin ? "Admin Dashboard" : "Seller Dashboard"}
 				</motion.h1>
 
-				<div className='flex justify-center mb-8'>
+				<div className='flex justify-center flex-wrap mb-8'>
 					{tabs.map((tab) => (
 						<button
 							key={tab.id}
 							onClick={() => setActiveTab(tab.id)}
-							className={`flex items-center px-4 py-2 mx-2 rounded-md transition-colors duration-200 ${
+							className={`flex items-center px-4 py-2 m-1 rounded-md transition-colors duration-200 ${
 								activeTab === tab.id
 									? "bg-emerald-600 text-white"
 									: "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -49,9 +77,12 @@ const AdminPage = () => {
 						</button>
 					))}
 				</div>
+                
+                {/* Conditional Rendering of Tabs */}
 				{activeTab === "create" && <CreateProductForm />}
 				{activeTab === "products" && <ProductsList />}
-				{activeTab === "analytics" && <AnalyticsTab />}
+				{isAdmin && activeTab === "analytics" && <AnalyticsTab />}
+                {isAdmin && activeTab === "users" && <UsersTab />}
 			</div>
 		</div>
 	);

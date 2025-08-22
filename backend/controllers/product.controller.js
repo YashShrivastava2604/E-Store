@@ -4,12 +4,23 @@ import Product from "../models/product.model.js";
 
 export const getAllProducts = async (req, res) => {
 	try {
-		const products = await Product.find({}); // find all products
+		const products = await Product.find({}).populate('seller', 'name'); // find all products
 		res.json({ products });
 	} catch (error) {
 		console.log("Error in getAllProducts controller", error.message);
 		res.status(500).json({ message: "Server error", error: error.message });
 	}
+};
+
+// SELLER/ADMIN: Gets only their own listed products
+export const getSellerProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ seller: req.user._id });
+        res.json({ products });
+    } catch (error) {
+        console.log("Error in getSellerProducts controller", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
 };
 
 export const getFeaturedProducts = async (req, res) => {
@@ -55,6 +66,7 @@ export const createProduct = async (req, res) => {
 			price,
 			image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
 			category,
+			seller: req.user._id,
 		});
 
 		res.status(201).json(product);
@@ -71,6 +83,11 @@ export const deleteProduct = async (req, res) => {
 		if (!product) {
 			return res.status(404).json({ message: "Product not found" });
 		}
+
+		// PERMISSION CHECK: User must be the seller or an admin
+        if (product.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Not authorized to delete this product." });
+        }
 
 		if (product.image) {
 			const publicId = product.image.split("/").pop().split(".")[0];
