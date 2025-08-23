@@ -1,53 +1,105 @@
 import Order from "../models/order.model.js";
 import { stripe } from "../lib/stripe.js";
 
+// export const createCheckoutSession = async (req, res) => {
+// 	try {
+// 		const { products } = req.body;
+
+// 		if (!Array.isArray(products) || products.length === 0) {
+// 			return res.status(400).json({ error: "Invalid or empty products array" });
+// 		}
+
+// 		const lineItems = products.map((product) => {
+// 			const amount = Math.round(product.price * 100); // Stripe needs cents
+// 			return {
+// 				price_data: {
+// 					currency: "usd",
+// 					product_data: {
+// 						name: product.name,
+// 						images: [product.image],
+// 					},
+// 					unit_amount: amount,
+// 				},
+// 				quantity: product.quantity || 1,
+// 			};
+// 		});
+
+// 		const session = await stripe.checkout.sessions.create({
+// 			payment_method_types: ["card"],
+// 			line_items: lineItems,
+// 			mode: "payment",
+// 			success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+// 			cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+// 			metadata: {
+// 				userId: req.user._id.toString(),
+// 				products: JSON.stringify(
+// 					products.map((p) => ({
+// 						id: p._id,
+// 						quantity: p.quantity,
+// 						price: p.price,
+// 					}))
+// 				),
+// 			},
+// 		});
+
+// 		res.status(200).json({ id: session.id });
+// 	} catch (error) {
+// 		console.error("Error processing checkout:", error);
+// 		res.status(500).json({ message: "Error processing checkout", error: error.message });
+// 	}
+// };
+
 export const createCheckoutSession = async (req, res) => {
-	try {
-		const { products } = req.body;
+  try {
+    console.log("=== createCheckoutSession called ===");
+    console.log("ENV Stripe key prefix:", (process.env.Stripe_Secret_Key || process.env.STRIPE_SECRET_KEY || "").slice(0,8));
+    // If you prefer to check for sk_test_:
+    console.log("Stripe key looks like test?", (process.env.Stripe_Secret_Key || process.env.STRIPE_SECRET_KEY || "").startsWith("sk_test_"));
 
-		if (!Array.isArray(products) || products.length === 0) {
-			return res.status(400).json({ error: "Invalid or empty products array" });
-		}
+    const { products } = req.body;
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: "Invalid or empty products array" });
+    }
 
-		const lineItems = products.map((product) => {
-			const amount = Math.round(product.price * 100); // Stripe needs cents
-			return {
-				price_data: {
-					currency: "usd",
-					product_data: {
-						name: product.name,
-						images: [product.image],
-					},
-					unit_amount: amount,
-				},
-				quantity: product.quantity || 1,
-			};
-		});
+    const lineItems = products.map((product) => {
+      const amount = Math.round(product.price * 100);
+      return {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: product.name,
+            images: [product.image],
+          },
+          unit_amount: amount,
+        },
+        quantity: product.quantity || 1,
+      };
+    });
 
-		const session = await stripe.checkout.sessions.create({
-			payment_method_types: ["card"],
-			line_items: lineItems,
-			mode: "payment",
-			success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
-			metadata: {
-				userId: req.user._id.toString(),
-				products: JSON.stringify(
-					products.map((p) => ({
-						id: p._id,
-						quantity: p.quantity,
-						price: p.price,
-					}))
-				),
-			},
-		});
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${process.env.CLIENT_URL}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/purchase-cancel`,
+      metadata: {
+        userId: req.user?._id?.toString() || "unknown",
+        products: JSON.stringify(
+          products.map((p) => ({ id: p._id, quantity: p.quantity, price: p.price }))
+        ),
+      },
+    });
 
-		res.status(200).json({ id: session.id });
-	} catch (error) {
-		console.error("Error processing checkout:", error);
-		res.status(500).json({ message: "Error processing checkout", error: error.message });
-	}
+    console.log("Stripe session created:", { id: session.id, livemode: session.livemode });
+
+    // For debugging only: return livemode to the client so you can inspect it in browser devtools
+    res.status(200).json({ id: session.id, livemode: session.livemode });
+  } catch (error) {
+    console.error("Error processing checkout:", error);
+    res.status(500).json({ message: "Error processing checkout", error: error.message });
+  }
 };
+
 
 export const checkoutSuccess = async (req, res) => {
 	try {
