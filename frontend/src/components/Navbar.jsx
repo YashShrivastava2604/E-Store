@@ -1,19 +1,35 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
+import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, Store } from "lucide-react"; // Import Store icon
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
 
 const Navbar = () => {
-	const { user, logout } = useUserStore();
+	const { user, logout, requestSellerAccess, loading: userStoreLoading } = useUserStore(); // Destructure requestSellerAccess and userStoreLoading
 	const isPrivilegedUser = user?.role === "admin" || user?.role === "seller";
+	const isRegularVerifiedUser = user?.role === "user" && user?.isVerified; // Condition for regular, verified users
 	const { cart } = useCartStore();
+
+    // Calculate if the request button should be disabled
+    const isSellerRequestPending = user?.sellerRequestStatus === 'pending';
+    // Check if cooldown period has passed. If sellerRequestExpires is null, allow request.
+    const canRequestAgain = user?.sellerRequestExpires ? new Date(user.sellerRequestExpires) < new Date() : true;
+    const disableRequestButton = userStoreLoading || (isSellerRequestPending && !canRequestAgain);
+
+    // Helper to format remaining time for cooldown message
+    const getRemainingTimeMessage = (expiryDate) => {
+        if (!expiryDate || new Date(expiryDate) < new Date()) return ""; // If expired or null, no message
+        const remainingTimeMillis = new Date(expiryDate).getTime() - Date.now();
+        const remainingDays = Math.ceil(remainingTimeMillis / (1000 * 60 * 60 * 24));
+        return `(Can request again in ${remainingDays} day${remainingDays > 1 ? 's' : ''})`;
+    }
+
 
 	return (
 		<header className='fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800'>
 			<div className='container mx-auto px-4 py-3'>
 				<div className='flex flex-wrap justify-between items-center'>
 					<Link to='/' className='text-2xl font-bold text-emerald-400 items-center space-x-2 flex'>
-						E-Commerce
+						E-Store
 					</Link>
 
 					<nav className='flex flex-wrap items-center gap-4'>
@@ -42,7 +58,7 @@ const Navbar = () => {
 								)}
 							</Link>
 						)}
-						{/* {isAdmin && (
+						{isPrivilegedUser && (
 							<Link
 								className='bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded-md font-medium
 								 transition duration-300 ease-in-out flex items-center'
@@ -51,16 +67,34 @@ const Navbar = () => {
 								<Lock className='inline-block mr-1' size={18} />
 								<span className='hidden sm:inline'>Dashboard</span>
 							</Link>
-						)} */}
-						{isPrivilegedUser && (
-							<Link
-								className='bg-emerald-700 hover:bg-emerald-600 text-white ...'
-								to={"/secret-dashboard"}
-							>
-								<Lock className='inline-block mr-1' size={18} />
-								<span className='hidden sm:inline'>Dashboard</span>
-							</Link>
 						)}
+
+                        {/* NEW: Request Seller Access Button/Status */}
+                        {isRegularVerifiedUser && ( // Only show this section for regular, VERIFIED users
+                            <>
+                                {/* Show button if request is not pending, or if it is pending but cooldown has passed */}
+                                {(!isSellerRequestPending || canRequestAgain) && (
+                                    <button
+                                        onClick={requestSellerAccess}
+                                        disabled={disableRequestButton}
+                                        className={`bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md font-medium
+                                            transition duration-300 ease-in-out flex items-center text-sm
+                                            ${disableRequestButton ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        title={isSellerRequestPending ? `Request already sent. ${getRemainingTimeMessage(user.sellerRequestExpires)}` : "Request to become a seller"}
+                                    >
+                                        <Store className="mr-1 h-4 w-4" />
+                                        Request Seller
+                                    </button>
+                                )}
+                                {/* Show status if request is pending and cooldown is still active */}
+                                {isSellerRequestPending && !canRequestAgain && (
+                                    <span className='text-gray-400 text-sm px-3 py-1 rounded-md flex items-center'>
+                                        Request Pending {getRemainingTimeMessage(user.sellerRequestExpires)}
+                                    </span>
+                                )}
+                            </>
+                        )}
+
 
 						{user ? (
 							<button

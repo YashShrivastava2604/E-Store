@@ -13,7 +13,7 @@ export const useProductStore = create((set) => ({
     set({ loading: true });
     try {
       const res = await axios.post("/products", productData);
-      const newProduct = res.data?.product ?? res.data;
+      const newProduct = res.data?.product ?? res.data; // Backend might return product directly
       set((prevState) => ({
         products: [...prevState.products, newProduct],
         loading: false,
@@ -27,6 +27,7 @@ export const useProductStore = create((set) => ({
     }
   },
 
+  // RENAMED from fetchAllProducts to clarify its use for Admin
   fetchAdminProducts: async () => {
     set({ loading: true });
     try {
@@ -37,17 +38,20 @@ export const useProductStore = create((set) => ({
       set({ products: payload, loading: false, error: null });
     } catch (error) {
       const message =
-        error.response?.data?.error || error.message || "Failed to fetch products";
+        error.response?.data?.error || error.message || "Failed to fetch all products for admin";
       set({ error: message, loading: false });
       toast.error(message);
     }
   },
 
+  // NEW: Fetch products specific to the logged-in seller
   fetchSellerProducts: async () => {
     set({ loading: true });
     try {
-      const response = await axios.get("/products/my-products");
-      const payload = response.data.products ?? [];
+      const response = await axios.get("/products/my-products"); // This is the new backend route
+      const payload = Array.isArray(response.data)
+        ? response.data
+        : response.data.products ?? [];
       set({ products: payload, loading: false, error: null });
     } catch (error) {
       const message =
@@ -107,27 +111,7 @@ export const useProductStore = create((set) => ({
       toast.error(message);
     }
   },
-
-  // toggleFeaturedProduct: async (productId) => {
-  //   set({ loading: true });
-  //   try {
-  //     const response = await axios.put(`/products/${productId}`);
-  //     const updated =
-  //       response.data?.updatedProduct ?? response.data?.product ?? response.data;
-  //     set((prevState) => ({
-  //       products: prevState.products.map((product) =>
-  //         product._id === productId ? { ...product, ...updated } : product
-  //       ),
-  //       loading: false,
-  //     }));
-  //     toast.success("Product updated");
-  //   } catch (error) {
-  //     const message =
-  //       error.response?.data?.error || error.message || "Failed to update product";
-  //     set({ loading: false });
-  //     toast.error(message);
-  //   }
-  // },
+  
   toggleFeaturedProduct: async (productId) => {
     set({ loading: true });
     try {

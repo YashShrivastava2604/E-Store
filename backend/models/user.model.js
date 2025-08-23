@@ -32,6 +32,21 @@ const userSchema = new mongoose.Schema({
         type: String, 
         enum: ['user', 'admin', 'seller'],
         default: 'user'
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    otp: String,
+    otpExpires: Date,
+    // --- NEW FIELDS FOR SELLER REQUESTS ---
+    sellerRequestStatus: {
+        type: String,
+        enum: ['none', 'pending', 'approved', 'rejected'],
+        default: 'none',
+    },
+    sellerRequestExpires: {
+        type: Date,
     }
 }, {timestamps: true});
 

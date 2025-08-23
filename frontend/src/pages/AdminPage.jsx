@@ -7,46 +7,52 @@ import CreateProductForm from "../components/CreateProductForm";
 import ProductsList from "../components/ProductsList";
 import UsersTab from "../components/UsersTab"; // Import the new component
 import { useProductStore } from "../stores/useProductStore";
-import { useUserStore } from "../stores/useUserStore"; // Import user store
+import { useUserStore } from "../stores/useUserStore"; // Import useUserStore
 
 const AdminPage = () => {
-	const [activeTab, setActiveTab] = useState("create");
-    const { user } = useUserStore(); // Get current user
+	const [activeTab, setActiveTab] = useState("products"); // Default to 'products' as it's common
+    const { user } = useUserStore(); // Get current user from store
 	const { fetchAdminProducts, fetchSellerProducts } = useProductStore();
 
     const isAdmin = user?.role === 'admin';
+    const isSeller = user?.role === 'seller';
 
     // Dynamically define tabs based on user role
     const tabs = useMemo(() => {
-        const baseTabs = [
+        const commonTabs = [
             { id: "create", label: "Create Product", icon: PlusCircle },
-            { id: "products", label: "My Products", icon: ShoppingBasket },
+            { id: "products", label: isSeller ? "My Products" : "All Products", icon: ShoppingBasket },
         ];
         if (isAdmin) {
             return [
-                ...baseTabs,
+                ...commonTabs,
                 { id: "analytics", label: "Analytics", icon: BarChart },
-                { id: "users", label: "Users", icon: Users },
+                { id: "users", label: "Users", icon: Users }, // Admin-only tab
             ];
         }
-        return baseTabs;
-    }, [isAdmin]);
+        return commonTabs; // Sellers only see create and their products
+    }, [isAdmin, isSeller]);
 
-    // Set a default active tab if the current one is not available for the role
+    // Adjust active tab if the current one is not available for the role
     useEffect(() => {
-        if (!tabs.find(t => t.id === activeTab)) {
-            setActiveTab('create');
+        // If the current activeTab is not found in the newly computed tabs,
+        // or if an admin-only tab is selected by a seller, default to 'products'
+        if (!tabs.some(t => t.id === activeTab) || (isSeller && (activeTab === 'analytics' || activeTab === 'users'))) {
+            setActiveTab('products');
         }
-    }, [tabs, activeTab]);
+    }, [tabs, activeTab, isSeller]); // Depend on tabs, activeTab, and isSeller
+
 
 	useEffect(() => {
         // Fetch the correct set of products based on role
 		if (isAdmin) {
             fetchAdminProducts();
-        } else {
+        } else if (isSeller) {
             fetchSellerProducts();
         }
-	}, [isAdmin, fetchAdminProducts, fetchSellerProducts]);
+        // No fetching for regular users if they somehow reach here (App.jsx prevents this)
+	}, [isAdmin, isSeller, fetchAdminProducts, fetchSellerProducts]); // Re-run when roles change or fetch functions change
+
 
 	return (
 		<div className='min-h-screen relative overflow-hidden'>
@@ -57,7 +63,7 @@ const AdminPage = () => {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.8 }}
 				>
-					{/* Dynamic Title */}
+					{/* Dynamic Dashboard Title */}
                     {isAdmin ? "Admin Dashboard" : "Seller Dashboard"}
 				</motion.h1>
 
@@ -78,11 +84,11 @@ const AdminPage = () => {
 					))}
 				</div>
                 
-                {/* Conditional Rendering of Tabs */}
+                {/* Conditional Rendering of Tab Content */}
 				{activeTab === "create" && <CreateProductForm />}
-				{activeTab === "products" && <ProductsList />}
+				{activeTab === "products" && <ProductsList isAdmin={isAdmin} />} {/* Pass isAdmin to ProductsList */}
 				{isAdmin && activeTab === "analytics" && <AnalyticsTab />}
-                {isAdmin && activeTab === "users" && <UsersTab />}
+                {isAdmin && activeTab === "users" && <UsersTab />} {/* Admin-only Users Tab */}
 			</div>
 		</div>
 	);

@@ -1,6 +1,50 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { sendEmail } from "../utils/sendEmail.js";
+
+export const requestSellerAccess = async (req, res) => {
+    try {
+        const userId = req.user._id; // from protectRoute middleware
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Prevent admins or existing sellers from making a request
+        if (user.role !== 'user') {
+            return res.status(400).json({ message: "Only users can request seller access." });
+        }
+
+        // Check if a request is already pending and not expired
+        if (user.sellerRequestStatus === 'pending' && user.sellerRequestExpires && new Date() < new Date(user.sellerRequestExpires)) {
+            return res.status(400).json({ message: "You already have a pending request." });
+        }
+        
+        // Set status to pending and add a 7-day cooldown for the next request
+        user.sellerRequestStatus = 'pending';
+        const sevenDaysFromNow = new Date();
+        sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+        user.sellerRequestExpires = sevenDaysFromNow;
+
+        await user.save();
+
+        const updatedUser = await User.findById(userId).select('-password');
+
+        res.status(200).json({
+            message: "Your request to become a seller has been submitted.",
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.log("Error in requestSellerAccess controller", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 
 const generateTokens = (userId) => {
 	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -34,31 +78,71 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 
 export const signup = async (req, res) => {
-	const { email, password, name } = req.body;
-	try {
-		const userExists = await User.findOne({ email });
+  const { email, password, name } = req.body;
 
-		if (userExists) {
-			return res.status(400).json({ message: "User already exists" });
-		}
-		const user = await User.create({ name, email, password });
+  try {
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: "User already exists" });
 
-		// authenticate
-		const { accessToken, refreshToken } = generateTokens(user._id);
-		await storeRefreshToken(user._id, refreshToken);
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-		setCookies(res, accessToken, refreshToken);
+    const user = await User.create({
+      name,
+      email,
+      password,
+      otp,
+      otpExpires: Date.now() + 10 * 60 * 1000, // 10 min expiry
+    });
 
-		res.status(201).json({
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-			role: user.role,
-		});
-	} catch (error) {
-		console.log("Error in signup controller", error.message);
-		res.status(500).json({ message: error.message });
-	}
+    // Send OTP
+    await sendEmail(
+      email,
+      "Verify your email - OTP",
+      `<h2>Your OTP is: <b>${otp}</b></h2><p>It will expire in 10 minutes.</p>`
+    );
+
+    res.status(201).json({ message: "OTP sent to your email. Please verify." });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Signup failed" });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "User not found" });
+
+    if (!user.otp || user.otp !== otp || user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // After successful verification, log the user in like /login does
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    await storeRefreshToken(user._id, refreshToken);
+    setCookies(res, accessToken, refreshToken);
+
+    const safeUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+    };
+
+    res.json({ message: "Verified successfully", user: safeUser });
+  } catch (error) {
+    console.log("Error in verifyOtp controller", error.message);
+    res.status(500).json({ message: "OTP verification failed", error: error.message });
+  }
 };
 
 export const login = async (req, res) => {
@@ -66,20 +150,26 @@ export const login = async (req, res) => {
 		const { email, password } = req.body;
 		const user = await User.findOne({ email });
 
-		if (user && (await user.comparePassword(password))) {
-			const { accessToken, refreshToken } = generateTokens(user._id);
-			await storeRefreshToken(user._id, refreshToken);
-			setCookies(res, accessToken, refreshToken);
-
-			res.json({
-				_id: user._id,
-				name: user.name,
-				email: user.email,
-				role: user.role,
-			});
-		} else {
-			res.status(400).json({ message: "Invalid email or password" });
+		if (!user || !(await user.comparePassword(password))) {
+			return res.status(401).json({ message: "Invalid email or password" });
 		}
+		
+		if (!user.isVerified) {
+			return res.status(403).json({ message: "Please verify your email address before logging in." });
+		}
+
+		const { accessToken, refreshToken } = generateTokens(user._id);
+		await storeRefreshToken(user._id, refreshToken);
+		setCookies(res, accessToken, refreshToken);
+
+		res.json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
+			role: user.role,
+			isVerified: user.isVerified,
+		});
+		
 	} catch (error) {
 		console.log("Error in login controller", error.message);
 		res.status(500).json({ message: error.message });
