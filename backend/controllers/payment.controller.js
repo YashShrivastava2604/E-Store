@@ -122,6 +122,8 @@ export const checkoutSuccess = async (req, res) => {
 
 			await newOrder.save();
 
+      await User.findByIdAndUpdate(userId, { $set: { cartItems: [] } });
+
 			res.status(200).json({
 				success: true,
 				message: "Payment successful and order created.",

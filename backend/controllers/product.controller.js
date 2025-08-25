@@ -99,6 +99,10 @@ export const deleteProduct = async (req, res) => {
 			}
 		}
 
+		if (product.isFeatured) {
+            await updateFeaturedProductsCache();
+        }
+
 		await Product.findByIdAndDelete(req.params.id);
 
 		res.json({ message: "Product deleted successfully" });
@@ -170,3 +174,13 @@ async function updateFeaturedProductsCache() {
 		console.log("error in update cache function");
 	}
 }
+
+export const clearFeaturedProductsCache = async (req, res) => {
+    try {
+        await redis.del("featured_products");
+        res.status(200).json({ message: "Featured products cache cleared successfully." });
+    } catch (error) {
+        console.log("Error in clearFeaturedProductsCache controller", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};

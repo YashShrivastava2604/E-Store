@@ -2,12 +2,12 @@ import toast from "react-hot-toast";
 import { ShoppingCart } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
+import { motion } from "framer-motion";
 
 const ProductCard = ({ product }) => {
 	const { user } = useUserStore();
 	const { addToCart } = useCartStore();
 
-	// Safely handle image field (string | array | object)
 	const imageUrl =
 		typeof product.image === "string"
 			? product.image
@@ -21,42 +21,36 @@ const ProductCard = ({ product }) => {
 			return;
 		} else {
 			addToCart(product);
+			toast.success(`${product.name} added to cart!`);
 		}
 	};
 
 	return (
-		<div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
-			<div className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl group">
-				<img
-					className="object-cover w-full h-full"
-					src={imageUrl}
-					alt={product.name || "Product image"}
-				/>
-				<div className="absolute inset-0 bg-black/5 pointer-events-none" />
+		<motion.div 
+			className="w-full h-full bg-white flex flex-col rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+			whileHover={{ y: -5 }}
+		>
+			<div className="relative h-64 overflow-hidden rounded-t-2xl group">
+				<img className="object-cover w-full h-full" src={imageUrl} alt={product.name || "Product image"}/>
 			</div>
-
-
-			<div className="mt-4 px-5 pb-5">
-				<h5 className="text-xl font-semibold tracking-tight text-white">
-					{product.name}
-				</h5>
-				<div className="mt-2 mb-5 flex items-center justify-between">
-					<p>
-						<span className="text-3xl font-bold text-emerald-400">
-							₹{product.price}
-						</span>
-					</p>
+			<div className="p-5 flex-grow flex flex-col justify-between">
+				<div>
+					<h5 className="text-xl font-bold tracking-tight text-gray-900">{product.name}</h5>
+					<p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
 				</div>
-				<button
-					className="flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
-					 text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
-					onClick={handleAddToCart}
-				>
-					<ShoppingCart size={22} className="mr-2" />
-					Add to cart
-				</button>
+				<div className="mt-4 flex items-center justify-between">
+					<p className="text-2xl font-bold text-emerald-600">${product.price}</p>
+					<button
+						className="flex items-center justify-center rounded-lg bg-emerald-600 p-2.5 text-center text-sm font-medium
+						text-white hover:bg-emerald-700 transition-colors"
+						onClick={handleAddToCart}
+						aria-label="Add to cart"
+					>
+						<ShoppingCart size={22} />
+					</button>
+				</div>
 			</div>
-		</div>
+		</motion.div>
 	);
 };
 

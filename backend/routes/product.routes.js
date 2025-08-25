@@ -8,6 +8,7 @@ import {
 	getRecommendedProducts,
 	toggleFeaturedProduct,
 	getSellerProducts,
+	clearFeaturedProductsCache,
 } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute, sellerOrAdminRoute } from "../middleware/auth.middleware.js";
 
@@ -26,7 +27,9 @@ router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct); // ONLY A
 router.post("/", protectRoute, sellerOrAdminRoute, createProduct); // Seller & Admin can create
 router.delete("/:id", protectRoute, sellerOrAdminRoute, deleteProduct); // Seller & Admin can delete
 
-// --- New Route for Sellers ---
+// --- Route for Sellers ---
 router.get("/my-products", protectRoute, sellerOrAdminRoute, getSellerProducts);
+
+router.delete("/featured/cache", protectRoute, adminRoute, clearFeaturedProductsCache);
 
 export default router;
