@@ -36,15 +36,9 @@ export const useUserStore = create((set, get) => ({
         }
     },
 
-	signup: async ({ name, email, password, confirmPassword }) => {
+	signup: async ({ name, email, password }) => {
 		set({ loading: true });
 		const navigate = get().navigate;
-
-		if (password !== confirmPassword) {
-			toast.error("Passwords do not match");
-			set({ loading: false });
-			return;
-		}
 
 		try {
 			const res = await axios.post("/auth/signup", { name, email, password });

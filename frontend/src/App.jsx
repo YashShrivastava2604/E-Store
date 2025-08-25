@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
 import HomePage from "./pages/HomePage";
@@ -23,6 +23,7 @@ function App() {
 	const { user, checkAuth, checkingAuth, setNavigate } = useUserStore();
 	const { getCartItems } = useCartStore();
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	useEffect(() => {
 		setNavigate(navigate);
@@ -37,25 +38,23 @@ function App() {
 
 	if (checkingAuth) return <LoadingSpinner />;
 
+	const isAuthPage = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/verify-email";
+	const showFooter = !isAuthPage;
+
 	return (
 		<div className='min-h-screen bg-gray-100 text-gray-800 font-sans'>
-			<Navbar />
-			<main className='pt-20'>
-				{" "}
-				{/* Added pt-20 to push content below the fixed navbar */}
+			{!isAuthPage && <Navbar />}
+			<main className={!isAuthPage ? "pt-20" : ""}>
 				<Routes>
 					<Route path='/' element={<HomePage />} />
-
 					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
 					<Route path='/login' element={!user ? <LoginPage /> : <Navigate to='/' />} />
-
 					<Route
 						path='/verify-email'
 						element={
 							!user && localStorage.getItem("pendingEmail") ? <VerifyEmailPage /> : <Navigate to='/signup' />
 						}
 					/>
-
 					<Route
 						path='/secret-dashboard'
 						element={
@@ -63,13 +62,12 @@ function App() {
 						}
 					/>
 					<Route path='/category/:category' element={<CategoryPage />} />
-
 					<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
 					<Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
 					<Route path='/purchase-cancel' element={user ? <PurchaseCancelPage /> : <Navigate to='/login' />} />
 				</Routes>
 			</main>
-			<Footer /> {/* Added a consistent footer */}
+			{showFooter && <Footer />}
 			<Toaster position='bottom-right' />
 		</div>
 	);
