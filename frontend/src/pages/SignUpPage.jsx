@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserStore } from "../stores/useUserStore";
-import SplineRobot from "../components/SplineRobot";
 import AuthHeader from "../components/AuthHeader";
 
 const SignUpPage = () => {
@@ -20,15 +19,14 @@ const SignUpPage = () => {
 	};
 
 	return (
-		<div className='w-full min-h-screen flex items-center justify-center  relative p-4 md:p-8 overflow-hidden bg-gray-100'>
+		<div className='w-full min-h-screen flex items-center justify-center relative p-4 md:p-8 overflow-hidden'>
 			<AuthHeader authType='signup' />
-			<SplineRobot pageState={"SignUpState"} />
 
 			<motion.div
 				initial={{ opacity: 0, x: 50 }}
 				animate={{ opacity: 1, x: 0 }}
 				transition={{ duration: 0.7, ease: "easeOut" }}
-				className='relative z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl shadow-2xl'
+				className='relative z-10 w-full max-w-md p-8 bg-emerald-200/10 backdrop-blur-[0.05rem] border border-white/20 rounded-2xl shadow-2xl'
 			>
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}

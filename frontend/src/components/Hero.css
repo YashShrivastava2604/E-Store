@@ -1,0 +1,62 @@
+/* src/components/Hero.css */
+
+.hero-container {
+    /* A single column, centered layout */
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    text-align: center;
+    height: 100%;
+    max-width: 900px; /* Constrains the width of the text for readability */
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.hero-text-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hero-headline {
+    font-size: 4.5rem; /* 72px */
+    font-weight: 800;
+    line-height: 1.1;
+    color: #1f2937;
+    letter-spacing: -2px;
+}
+
+.hero-subheadline {
+    font-size: 1.25rem; /* 20px */
+    color: #374151;
+    max-width: 650px; /* Keeps the paragraph from getting too wide */
+    line-height: 1.6;
+}
+
+.hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 2.5rem; /* A slightly larger button */
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: #059669;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    text-decoration: none;
+    box-shadow: 0 4px 15px -5px rgba(16, 185, 129, 0.4);
+    transform: translateY(0);
+    margin-top: 1rem; /* Adds some space above the button */
+}
+
+.hero-cta:hover {
+    background: #10b981;
+    box-shadow: 0 7px 25px -5px rgba(16, 185, 129, 0.6);
+    transform: translateY(-2px);
+}

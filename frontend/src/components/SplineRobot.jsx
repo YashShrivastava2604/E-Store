@@ -1,64 +1,50 @@
-import React, { Suspense, useEffect, useState } from "react";
+// components/SplineRobot.jsx
+import React, { useEffect, useRef } from "react";
 import Spline from "@splinetool/react-spline";
 
-const SplineRobot = ({ pageState = "none" }) => {
-	// States to hold all our key 3D objects
-	const [robot, setRobot] = useState(null);
-	const [heroMessage, setHeroMessage] = useState(null);
-	const [loginMessage, setLoginMessage] = useState(null);
-	const [signupMessage, setSignupMessage] = useState(null);
+const SplineRobot = ({ sceneUrl = "https://prod.spline.design/V189TAMpcgNzaTs9/scene.splinecode", pageState }) => {
+  const containerRef = useRef(null);
 
-	// When the scene loads, find all the objects we need and store them
-	const onSplineLoad = (splineApp) => {
-		const robotObject = splineApp.findObjectByName("Robot");
-		if (robotObject) {
-			// Immediately force its rotation to be straight on load
-			robotObject.rotation.y = 0;
-			setRobot(robotObject);
-		} else {
-			console.error("Could not find 'Robot' object in Spline scene.");
-		}
-		
-		setHeroMessage(splineApp.findObjectByName("HeroMessage"));
-		setLoginMessage(splineApp.findObjectByName("LoginPageMessage"));
-		setSignupMessage(splineApp.findObjectByName("SignUpPageMessage"));
-	};
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-	// Logic to control message visibility based on the pageState prop
-	useEffect(() => {
-		if (heroMessage && loginMessage && signupMessage) {
-			heroMessage.visible = pageState === "hero";
-			loginMessage.visible = pageState === "login";
-			signupMessage.visible = pageState === "signup";
-		}
-	}, [pageState, heroMessage, loginMessage, signupMessage]);
+    // Base styles for the background canvas
+    container.style.position = "fixed";
+    container.style.inset = "0";
+    container.style.pointerEvents = "none"; // don't block UI
+    // set negative z-index *via JS* (safer if some parents create stacking contexts)
+    container.style.zIndex = "0";
 
+    // Wait for the canvas to appear then force canvas styles
+    let canvas = null;
+    const findCanvas = () => {
+      canvas = container.querySelector("canvas");
+      return !!canvas;
+    };
 
-	// Mouse-following logic for the robot's body
-	useEffect(() => {
-		if (robot) {
-			const handleMouseMove = (event) => {
-				const { clientX } = event;
-				const sensitivity = 0.8;
-				robot.rotation.y = ((clientX / window.innerWidth - 0.5) * sensitivity);
-			};
+    const obs = new MutationObserver(() => {
+      if (findCanvas()) {
+        // Make sure canvas doesn't intercept pointer events and sits behind UI
+        canvas.style.pointerEvents = "none";
+        canvas.style.zIndex = "-11";
+        obs.disconnect();
+      }
+    });
+    obs.observe(container, { childList: true, subtree: true });
 
-			window.addEventListener("mousemove", handleMouseMove);
-			return () => window.removeEventListener("mousemove", handleMouseMove);
-		}
-	}, [robot]);
+    return () => {
+      obs.disconnect();
+    };
+  }, []);
 
-	return (
-		<div className='absolute inset-0 z-0'>
-			<Suspense fallback={<div className='w-full h-full bg-gray-100' />}>
-				<Spline
-					// PASTE YOUR MOST RECENT .splinecode LINK HERE
-					scene='https://prod.spline.design/Tr-ubidncoLpUH05/scene.splinecode'
-					onLoad={onSplineLoad}
-				/>
-			</Suspense>
-		</div>
-	);
+  // Optional: forward pageState by adding it to the scene url as a query param
+  // or use Spline's onLoad to manipulate scene. For now we just accept props.
+  return (
+    <div ref={containerRef} aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
+      <Spline scene={sceneUrl} />
+    </div>
+  );
 };
 
 export default SplineRobot;

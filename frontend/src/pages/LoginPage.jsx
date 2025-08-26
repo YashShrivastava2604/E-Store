@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
-import SplineRobot from "../components/SplineRobot";
 import AuthHeader from "../components/AuthHeader";
 
 const LoginPage = () => {
@@ -17,15 +16,14 @@ const LoginPage = () => {
 	};
 
 	return (
-		<div className='w-full min-h-screen flex items-center justify-center relative p-4 md:p-8 overflow-hidden bg-gray-100'>
+		<div className='w-full min-h-screen flex items-center justify-center relative p-4 md:p-8 overflow-hidden'>
 			<AuthHeader authType='login' />
-			<SplineRobot pageState={"LoginState"} />
 
 			<motion.div
 				initial={{ opacity: 0, x: 50 }}
 				animate={{ opacity: 1, x: 0 }}
 				transition={{ duration: 0.7, ease: "easeOut" }}
-				className='relative z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl shadow-2xl'
+				className='relative z-10 w-full max-w-md p-8 bg-emerald-200/10 backdrop-blur-[0.05rem] border border-white/20 rounded-2xl shadow-2xl'
 			>
 				<motion.div
 					initial={{ opacity: 0, y: -20 }}
@@ -107,7 +105,7 @@ const LoginPage = () => {
 						</button>
 					</form>
 					<p className='mt-8 text-center text-sm text-black/50 font-bold'>
-						Not a member? {" "}
+						Not a member?{" "}
 						<Link to='/signup' className='text-lg font-medium text-emerald-500 hover:text-emerald-600 transition-colors'>
 							Sign up now <ArrowRight className='inline h-4 w-4' />
 						</Link>

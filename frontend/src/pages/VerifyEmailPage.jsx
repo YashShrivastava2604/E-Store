@@ -4,7 +4,6 @@ import { useUserStore } from "../stores/useUserStore";
 import { Loader, ShieldCheck } from "lucide-react";
 import { toast } from "react-hot-toast";
 import AuthHeader from "../components/AuthHeader";
-import SplineRobot from "../components/SplineRobot";
 
 const VerifyEmailPage = () => {
 	const [otp, setOtp] = useState("");
@@ -20,9 +19,8 @@ const VerifyEmailPage = () => {
 	};
 
 	return (
-		<div className='w-full min-h-screen flex items-center justify-center relative p-4 md:p-8 overflow-hidden bg-gray-100'>
+		<div className='w-full min-h-screen flex items-center justify-center relative p-4 md:p-8 overflow-hidden'>
 			<AuthHeader />
-			<SplineRobot pageState={"SignUpState"} />
 
 			<motion.div
 				initial={{ opacity: 0, x: 50 }}

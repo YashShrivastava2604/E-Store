@@ -10,49 +10,51 @@ const CartPage = () => {
 	const { cart } = useCartStore();
 
 	return (
-		<div className='py-8 md:py-16 bg-gray-100'>
+		<div className='py-8 md:py-16'>
 			<div className='container mx-auto max-w-screen-xl px-4 2xl:px-0'>
-				<motion.h1
-					className='text-3xl sm:text-4xl font-bold text-gray-800 mb-8'
+				<motion.div
+					className='p-8 rounded-2xl bg-white/60 backdrop-blur-lg border border-white/40 shadow-lg'
 					initial={{ opacity: 0, y: -20 }}
 					animate={{ opacity: 1, y: 0 }}
 				>
-					Your Shopping Cart
-				</motion.h1>
+					<h1 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-8'>
+						Your Shopping Cart
+					</h1>
 
-				<div className='lg:flex lg:items-start lg:gap-8'>
-					<motion.div
-						className='w-full flex-none lg:max-w-3xl xl:max-w-4xl'
-						initial={{ opacity: 0, x: -20 }}
-						animate={{ opacity: 1, x: 0 }}
-						transition={{ duration: 0.5, delay: 0.2 }}
-					>
-						{cart.length === 0 ? (
-							<EmptyCartUI />
-						) : (
-							<div className='space-y-6 bg-white p-6 rounded-2xl shadow-lg'>
-								{cart.map((item, index) => (
-									<CartItem
-										key={item._id}
-										item={item}
-										isLastItem={index === cart.length - 1}
-									/>
-								))}
-							</div>
-						)}
-					</motion.div>
-
-					{cart.length > 0 && (
+					<div className='lg:flex lg:items-start lg:gap-8'>
 						<motion.div
-							className='mt-6 w-full flex-1 space-y-6 lg:mt-0'
-							initial={{ opacity: 0, x: 20 }}
+							className='w-full flex-none lg:max-w-3xl xl:max-w-4xl'
+							initial={{ opacity: 0, x: -20 }}
 							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.5, delay: 0.4 }}
+							transition={{ duration: 0.5, delay: 0.2 }}
 						>
-							<OrderSummary />
+							{cart.length === 0 ? (
+								<EmptyCartUI />
+							) : (
+								<div className='space-y-6 bg-white/80 p-6 rounded-2xl shadow-lg'>
+									{cart.map((item, index) => (
+										<CartItem
+											key={item._id}
+											item={item}
+											isLastItem={index === cart.length - 1}
+										/>
+									))}
+								</div>
+							)}
 						</motion.div>
-					)}
-				</div>
+
+						{cart.length > 0 && (
+							<motion.div
+								className='mt-6 w-full flex-1 space-y-6 lg:mt-0'
+								initial={{ opacity: 0, x: 20 }}
+								animate={{ opacity: 1, x: 0 }}
+								transition={{ duration: 0.5, delay: 0.4 }}
+							>
+								<OrderSummary />
+							</motion.div>
+						)}
+					</div>
+				</motion.div>
 				{cart.length > 0 && <PeopleAlsoBought />}
 			</div>
 		</div>
@@ -62,7 +64,7 @@ export default CartPage;
 
 const EmptyCartUI = () => (
 	<motion.div
-		className='flex flex-col items-center justify-center space-y-4 py-16 bg-white rounded-2xl shadow-lg'
+		className='flex flex-col items-center justify-center space-y-4 py-16 bg-white/80 rounded-2xl shadow-lg'
 		initial={{ opacity: 0, scale: 0.95 }}
 		animate={{ opacity: 1, scale: 1 }}
 		transition={{ duration: 0.5 }}

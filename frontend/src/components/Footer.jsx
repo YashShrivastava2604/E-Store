@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
 	return (
-		<footer className='bg-white border-t border-gray-200'>
+		// Added frosted glass effect to match the rest of the site's aesthetic
+		<footer className='bg-white/50 backdrop-blur-lg border-t border-white/30'>
 			<div className='max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8'>
 				<div className='xl:grid xl:grid-cols-3 xl:gap-8'>
 					<div className='space-y-8 xl:col-span-1'>

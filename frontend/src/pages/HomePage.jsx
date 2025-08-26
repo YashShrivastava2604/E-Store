@@ -1,10 +1,13 @@
+// src/pages/HomePage.jsx
+
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
-import SplineRobot from "../components/SplineRobot";
 import CategoryItem from "../components/CategoryItem";
 import { useProductStore } from "../stores/useProductStore";
 import FeaturedProducts from "../components/FeaturedProducts";
+import ScrollFloatWrapper from "../components/ScrollFloatWrapper"; // Import our new animation wrapper
+import '../components/Hero.css';
+import '../components/CategoryItem.css';
 
 const categories = [
 	{ href: "/jeans", name: "Jeans", imageUrl: "/jeans.jpg" },
@@ -24,51 +27,43 @@ const HomePage = () => {
 	}, [fetchFeaturedProducts]);
 
 	return (
-		<div className='bg-gray-100 text-gray-800'>
-			<section className='relative w-full h-screen flex items-center justify-center overflow-hidden bg-gray-100'>
-				<SplineRobot pageState='hero' />
-				
-				<motion.div
-					className='relative z-10 text-center px-4'
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.8 }}
-				>
-					<h1 className='text-5xl md:text-7xl font-extrabold text-gray-900 drop-shadow-lg'>
-						The Future of Fashion
-					</h1>
-					<p className='mt-4 text-lg md:text-xl text-gray-700 max-w-2xl mx-auto'>
-						Discover cutting-edge trends and sustainable styles that redefine your wardrobe.
-					</p>
-					<motion.button 
-						className='mt-8 px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg shadow-lg hover:bg-emerald-700 transition-colors'
-						whileHover={{ scale: 1.05 }}
-						whileTap={{ scale: 0.95 }}
-					>
-						Shop Now
-					</motion.button>
-				</motion.div>
-
-				<motion.div
-					className='absolute bottom-10 z-10'
-					animate={{ y: [0, 10, 0] }}
-					transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-				>
-					<ArrowDown className='text-gray-600 w-8 h-8' />
-				</motion.div>
+		<div>
+			{/* --- Grounded Hero Section (Unchanged) --- */}
+			<section className='relative w-full h-screen flex items-center justify-center overflow-hidden'>
+                <div className="absolute inset-0 bg-black/10  z-0"></div>
+				<div className="hero-container">
+                    <motion.div 
+                        className="hero-text-content"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                    >
+                        <h1 className="hero-headline">Dress for the Moment.</h1>
+                        <p className="hero-subheadline">
+                            Welcome to E-Store, your destination for high-quality fashion. Explore our curated collections of apparel, shoes, and accessories and discover pieces you'll love for years to come.
+                        </p>
+                        <a href="#categories" className="hero-cta">Explore Collections</a>
+                    </motion.div>
+                </div>
 			</section>
 
-			<section className='relative bg-white z-10 py-20'>
+			{/* --- Category Section with Scroll Float Animation on the Orbs --- */}
+			<section id="categories" className='relative z-10 py-24 bg-white/10 backdrop-blur-[0.099rem] border-t border-b border-white/40 overflow-hidden'>
 				<div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-					<h2 className='text-center text-4xl sm:text-5xl font-bold text-gray-900 mb-4'>
-						Explore Our Categories
-					</h2>
-					<p className='text-center text-lg text-gray-600 mb-12'>
-						Discover the latest trends in eco-friendly fashion
+                    {/* The headings are now simple and clean */}
+                    <h2 className='text-center text-4xl sm:text-5xl font-bold text-gray-800 mb-6'>
+                        Curated for Your Lifestyle
+                    </h2>
+					<p className='text-center text-lg text-gray-500 mb-20 max-w-3xl mx-auto'>
+						Timeless staples and modern essentials. Discover a collection where quality craftsmanship and contemporary design meet.
 					</p>
-					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'>
-						{categories.map((category) => (
-							<CategoryItem category={category} key={category.name} />
+
+					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20'>
+						{categories.map((category, index) => (
+							// Each CategoryItem is wrapped to handle its own scroll-in animation
+                            <ScrollFloatWrapper key={category.name} index={index}>
+							    <CategoryItem category={category} />
+                            </ScrollFloatWrapper>
 						))}
 					</div>
 				</div>
@@ -78,4 +73,5 @@ const HomePage = () => {
 		</div>
 	);
 };
+
 export default HomePage;

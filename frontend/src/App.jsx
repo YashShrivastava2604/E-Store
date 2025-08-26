@@ -14,6 +14,7 @@ import PurchaseCancelPage from "./pages/PurchaseCancelPage";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import LoadingSpinner from "./components/LoadingSpinner";
+import SplineRobot from "./components/SplineRobot";
 import { Toaster } from "react-hot-toast";
 
 import { useUserStore } from "./stores/useUserStore";
@@ -39,35 +40,60 @@ function App() {
 	if (checkingAuth) return <LoadingSpinner />;
 
 	const isAuthPage = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/verify-email";
-	const showFooter = !isAuthPage;
+	// Updated logic: Footer now only shows on the homepage.
+	const showFooter = location.pathname === "/";
+
+	const getSplineState = () => {
+		if (location.pathname === "/login") return "LoginState";
+		if (location.pathname === "/signup" || location.pathname === "/verify-email") return "SignUpState";
+		return "hero";
+	};
 
 	return (
-		<div className='min-h-screen bg-gray-100 text-gray-800 font-sans'>
-			{!isAuthPage && <Navbar />}
-			<main className={!isAuthPage ? "pt-20" : ""}>
-				<Routes>
-					<Route path='/' element={<HomePage />} />
-					<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
-					<Route path='/login' element={!user ? <LoginPage /> : <Navigate to='/' />} />
-					<Route
-						path='/verify-email'
-						element={
-							!user && localStorage.getItem("pendingEmail") ? <VerifyEmailPage /> : <Navigate to='/signup' />
-						}
-					/>
-					<Route
-						path='/secret-dashboard'
-						element={
-							user?.role === "admin" || user?.role === "seller" ? <AdminPage /> : <Navigate to='/login' />
-						}
-					/>
-					<Route path='/category/:category' element={<CategoryPage />} />
-					<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
-					<Route path='/purchase-success' element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />} />
-					<Route path='/purchase-cancel' element={user ? <PurchaseCancelPage /> : <Navigate to='/login' />} />
-				</Routes>
-			</main>
-			{showFooter && <Footer />}
+		// Removed bg-gray-100 to let the Spline scene be the true background
+		<div className='min-h-screen text-gray-800 font-sans'>
+			{/* Background robot (render for all routes; it sits behind the UI) */}
+			<SplineRobot pageState={getSplineState()} />
+
+
+			{/* This div wraps all scrollable content and sits on top of the robot */}
+			<div className='relative z-30'>
+				{!isAuthPage && <Navbar />}
+				<main className={!isAuthPage ? "pt-20" : ""}>
+					<Routes>
+						<Route path='/' element={<HomePage />} />
+						<Route path='/signup' element={!user ? <SignUpPage /> : <Navigate to='/' />} />
+						<Route path='/login' element={!user ? <LoginPage /> : <Navigate to='/' />} />
+						<Route
+							path='/verify-email'
+							element={
+								!user && localStorage.getItem("pendingEmail") ? (
+									<VerifyEmailPage />
+								) : (
+									<Navigate to='/signup' />
+								)
+							}
+						/>
+						<Route
+							path='/secret-dashboard'
+							element={
+								user?.role === "admin" || user?.role === "seller" ? <AdminPage /> : <Navigate to='/login' />
+							}
+						/>
+						<Route path='/category/:category' element={<CategoryPage />} />
+						<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
+						<Route
+							path='/purchase-success'
+							element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />}
+						/>
+						<Route
+							path='/purchase-cancel'
+							element={user ? <PurchaseCancelPage /> : <Navigate to='/login' />}
+						/>
+					</Routes>
+				</main>
+				{showFooter && <Footer />}
+			</div>
 			<Toaster position='bottom-right' />
 		</div>
 	);
