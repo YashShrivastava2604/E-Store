@@ -89,6 +89,9 @@ export const deleteProduct = async (req, res) => {
             return res.status(403).json({ message: "Not authorized to delete this product." });
         }
 
+		// Store whether the product was featured BEFORE deleting it
+		const wasFeatured = product.isFeatured;
+
 		if (product.image) {
 			const publicId = product.image.split("/").pop().split(".")[0];
 			try {
@@ -99,11 +102,14 @@ export const deleteProduct = async (req, res) => {
 			}
 		}
 
-		if (product.isFeatured) {
+		// Step 1: Delete the product from the database FIRST.
+		await Product.findByIdAndDelete(req.params.id);
+
+		// Step 2: IF the deleted product was featured, NOW update the cache.
+		// The cache will be rebuilt from the database, which no longer contains the deleted product.
+        if (wasFeatured) {
             await updateFeaturedProductsCache();
         }
-
-		await Product.findByIdAndDelete(req.params.id);
 
 		res.json({ message: "Product deleted successfully" });
 	} catch (error) {

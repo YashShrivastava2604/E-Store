@@ -109,8 +109,8 @@
     transform: translateY(-50%) scale(1.1);
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
-.arrow-left { left: calc(50% - 250px); }
-.arrow-right { right: calc(50% - 250px); }
+.arrow-left { left: calc(30% - 250px); }
+.arrow-right { right: calc(30% - 250px); }
 
 .carousel-pagination {
     position: absolute;
