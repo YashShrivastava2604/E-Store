@@ -74,8 +74,7 @@ export const useUserStore = create((set, get) => ({
 			set({ loading: false });
 		}
 	},
-
-	login: async (email, password) => {
+	login : async (email, password) => {
 		set({ loading: true });
 		const navigate = get().navigate;
 		try {

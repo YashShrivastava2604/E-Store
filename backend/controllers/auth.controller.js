@@ -1,165 +1,135 @@
-import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "../utils/sendEmail.js";
 
-export const requestSellerAccess = async (req, res) => {
-    try {
-        const userId = req.user._id; // from protectRoute middleware
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Prevent admins or existing sellers from making a request
-        if (user.role !== 'user') {
-            return res.status(400).json({ message: "Only users can request seller access." });
-        }
-
-        // Check if a request is already pending and not expired
-        if (user.sellerRequestStatus === 'pending' && user.sellerRequestExpires && new Date() < new Date(user.sellerRequestExpires)) {
-            return res.status(400).json({ message: "You already have a pending request." });
-        }
-        
-        // Set status to pending and add a 7-day cooldown for the next request
-        user.sellerRequestStatus = 'pending';
-        const sevenDaysFromNow = new Date();
-        sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-        user.sellerRequestExpires = sevenDaysFromNow;
-
-        await user.save();
-
-        const updatedUser = await User.findById(userId).select('-password');
-
-        res.status(200).json({
-            message: "Your request to become a seller has been submitted.",
-            user: updatedUser
-        });
-
-    } catch (error) {
-        console.log("Error in requestSellerAccess controller", error.message);
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
-};
-
+/* =========================
+   TOKEN HELPERS
+========================= */
 
 const generateTokens = (userId) => {
-	const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
-		expiresIn: "15m",
-	});
+	try {
+		const accessToken = jwt.sign(
+			{ userId },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: "15m" }
+		);
 
-	const refreshToken = jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
-		expiresIn: "7d",
-	});
+		const refreshToken = jwt.sign(
+			{ userId },
+			process.env.REFRESH_TOKEN_SECRET,
+			{ expiresIn: "7d" }
+		);
 
-	return { accessToken, refreshToken };
-};
-
-const storeRefreshToken = async (userId, refreshToken) => {
-	await redis.set(`refresh_token:${userId}`, refreshToken, "EX", 7 * 24 * 60 * 60); // 7days
+		return { accessToken, refreshToken };
+	} catch (error) {
+		throw new Error("Token generation failed");
+	}
 };
 
 const setCookies = (res, accessToken, refreshToken) => {
 	res.cookie("accessToken", accessToken, {
-		httpOnly: true, // prevent XSS attacks, cross site scripting attack
+		httpOnly: true,
+		sameSite: "strict",
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
-		maxAge: 15 * 60 * 1000, // 15 minutes
+		maxAge: 15 * 60 * 1000,
 	});
+
 	res.cookie("refreshToken", refreshToken, {
-		httpOnly: true, // prevent XSS attacks, cross site scripting attack
+		httpOnly: true,
+		sameSite: "strict",
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict", // prevents CSRF attack, cross-site request forgery attack
-		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+		maxAge: 7 * 24 * 60 * 60 * 1000,
 	});
 };
 
+/* =========================
+   AUTH CONTROLLERS
+========================= */
+
 export const signup = async (req, res) => {
-  const { email, password, name } = req.body;
+	try {
+		const { name, email, password } = req.body;
 
-  try {
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "User already exists" });
+		const existingUser = await User.findOne({ email });
+		if (existingUser) {
+			return res.status(400).json({ message: "User already exists" });
+		}
 
-    // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+		const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      otp,
-      otpExpires: Date.now() + 10 * 60 * 1000, // 10 min expiry
-    });
+		await User.create({
+			name,
+			email,
+			password,
+			otp,
+			otpExpires: Date.now() + 10 * 60 * 1000,
+		});
 
-    // Send OTP
-    await sendEmail(
-      email,
-      "Verify your email - OTP",
-      `<h2>Your OTP is: <b>${otp}</b></h2><p>It will expire in 10 minutes.</p>`
-    );
+		await sendEmail(
+			email,
+			"Verify your email - OTP",
+			`<h2>Your OTP is <b>${otp}</b></h2><p>Valid for 10 minutes</p>`
+		);
 
-    res.status(201).json({ message: "OTP sent to your email. Please verify." });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Signup failed" });
-  }
+		res.status(201).json({ message: "OTP sent to your email. Please verify." });
+	} catch (error) {
+		console.error("Signup error:", error.message);
+		res.status(500).json({ message: "Signup failed" });
+	}
 };
 
 export const verifyOtp = async (req, res) => {
-  const { email, otp } = req.body;
+	try {
+		const { email, otp } = req.body;
 
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(400).json({ message: "User not found" });
+		}
 
-    if (!user.otp || user.otp !== otp || user.otpExpires < Date.now()) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
+		if (!user.otp || user.otp !== otp || user.otpExpires < Date.now()) {
+			return res.status(400).json({ message: "Invalid or expired OTP" });
+		}
 
-    user.isVerified = true;
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
+		user.isVerified = true;
+		user.otp = undefined;
+		user.otpExpires = undefined;
+		await user.save();
 
-    // After successful verification, log the user in like /login does
-    const { accessToken, refreshToken } = generateTokens(user._id);
-    await storeRefreshToken(user._id, refreshToken);
-    setCookies(res, accessToken, refreshToken);
+		const { accessToken, refreshToken } = generateTokens(user._id);
+		setCookies(res, accessToken, refreshToken);
 
-    const safeUser = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified,
-    };
-
-    res.json({ message: "Verified successfully", user: safeUser });
-  } catch (error) {
-    console.log("Error in verifyOtp controller", error.message);
-    res.status(500).json({ message: "OTP verification failed", error: error.message });
-  }
+		res.json({
+			message: "Verified successfully",
+			user: {
+				_id: user._id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				isVerified: true,
+			},
+		});
+	} catch (error) {
+		console.error("Verify OTP error:", error.message);
+		res.status(500).json({ message: "OTP verification failed" });
+	}
 };
 
 export const login = async (req, res) => {
 	try {
 		const { email, password } = req.body;
-		const user = await User.findOne({ email });
 
-		if (!user || !(await user.comparePassword(password))) {
+		const user = await User.findOne({ email });
+		if (!user || !(await bcrypt.compare(password, user.password))) {
 			return res.status(401).json({ message: "Invalid email or password" });
 		}
-		
+
 		if (!user.isVerified) {
-			return res.status(403).json({ message: "Please verify your email address before logging in." });
+			return res.status(403).json({ message: "Please verify your email first" });
 		}
 
 		const { accessToken, refreshToken } = generateTokens(user._id);
-		await storeRefreshToken(user._id, refreshToken);
 		setCookies(res, accessToken, refreshToken);
 
 		res.json({
@@ -167,61 +137,51 @@ export const login = async (req, res) => {
 			name: user.name,
 			email: user.email,
 			role: user.role,
-			isVerified: user.isVerified,
+			isVerified: true,
 		});
-		
 	} catch (error) {
-		console.log("Error in login controller", error.message);
-		res.status(500).json({ message: error.message });
+		console.error("Login error:", error.message);
+		res.status(500).json({ message: "Login failed" });
 	}
 };
 
-export const logout = async (req, res) => {
-	try {
-		const refreshToken = req.cookies.refreshToken;
-		if (refreshToken) {
-			const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-			await redis.del(`refresh_token:${decoded.userId}`);
-		}
-
-		res.clearCookie("accessToken");
-		res.clearCookie("refreshToken");
-		res.json({ message: "Logged out successfully" });
-	} catch (error) {
-		console.log("Error in logout controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
-	}
-};
-
-// this will refresh the access token
 export const refreshToken = async (req, res) => {
 	try {
-		const refreshToken = req.cookies.refreshToken;
-
-		if (!refreshToken) {
+		const token = req.cookies.refreshToken;
+		if (!token) {
 			return res.status(401).json({ message: "No refresh token provided" });
 		}
 
-		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+		const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
-		if (storedToken !== refreshToken) {
-			return res.status(401).json({ message: "Invalid refresh token" });
-		}
-
-		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+		const accessToken = jwt.sign(
+			{ userId: decoded.userId },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: "15m" }
+		);
 
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
+			secure: process.env.NODE_ENV === "production",
 			maxAge: 15 * 60 * 1000,
 		});
 
 		res.json({ message: "Token refreshed successfully" });
 	} catch (error) {
-		console.log("Error in refreshToken controller", error.message);
-		res.status(500).json({ message: "Server error", error: error.message });
+		console.error("Refresh token error:", error.message);
+		res.status(401).json({ message: "Session expired. Please login again." });
+	}
+};
+
+export const logout = async (req, res) => {
+	try {
+		res.clearCookie("accessToken");
+		res.clearCookie("refreshToken");
+		res.json({ message: "Logged out successfully" });
+	} catch (error) {
+		console.error("Logout error:", error.message);
+		res.status(500).json({ message: "Logout failed" });
 	}
 };
 
@@ -229,37 +189,86 @@ export const getProfile = async (req, res) => {
 	try {
 		res.json(req.user);
 	} catch (error) {
-		res.status(500).json({ message: "Server error", error: error.message });
+		res.status(500).json({ message: "Failed to fetch profile" });
+	}
+};
+
+/* =========================
+   ADMIN / USER MGMT
+========================= */
+
+export const getAllUsers = async (req, res) => {
+	try {
+		const users = await User.find({}).select("-password");
+		res.json({ users });
+	} catch (error) {
+		console.error("Get users error:", error.message);
+		res.status(500).json({ message: "Failed to fetch users" });
 	}
 };
 
 export const setUserRole = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { role } = req.body;
+	try {
+		const { id } = req.params;
+		const { role } = req.body;
 
-        if (!['user', 'seller', 'admin'].includes(role)) {
-            return res.status(400).json({ message: "Invalid role specified" });
-        }
+		if (!["user", "seller", "admin"].includes(role)) {
+			return res.status(400).json({ message: "Invalid role" });
+		}
 
-        const updatedUser = await User.findByIdAndUpdate(id, { role }, { new: true }).select("-password");
+		const updatedUser = await User.findByIdAndUpdate(
+			id,
+			{ role },
+			{ new: true }
+		).select("-password");
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+		if (!updatedUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
 
-        res.json({ message: `User role successfully updated to ${role}`, user: updatedUser });
-    } catch (error) {
-        console.log("Error in setUserRole controller", error.message);
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
+		res.json({
+			message: `User role updated to ${role}`,
+			user: updatedUser,
+		});
+	} catch (error) {
+		console.error("Set role error:", error.message);
+		res.status(500).json({ message: "Failed to update role" });
+	}
 };
 
-export const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find({}).select("-password");
-        res.json({ users });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
+export const requestSellerAccess = async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id);
+
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		if (user.role !== "user") {
+			return res.status(400).json({ message: "Only users can request seller access" });
+		}
+
+		if (
+			user.sellerRequestStatus === "pending" &&
+			user.sellerRequestExpires &&
+			new Date() < user.sellerRequestExpires
+		) {
+			return res.status(400).json({ message: "Request already pending" });
+		}
+
+		user.sellerRequestStatus = "pending";
+		user.sellerRequestExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+		await user.save();
+
+		const safeUser = await User.findById(user._id).select("-password");
+
+		res.json({
+			message: "Seller access request submitted",
+			user: safeUser,
+		});
+	} catch (error) {
+		console.error("Seller request error:", error.message);
+		res.status(500).json({ message: "Failed to request seller access" });
+	}
 };

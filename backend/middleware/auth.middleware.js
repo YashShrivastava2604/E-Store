@@ -1,45 +1,37 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js';
+import jwt from "jsonwebtoken";
+import User from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
-    try {
-        const accessToken = req.cookies.accessToken;
-        if(!accessToken){
-            return res.status(401).json({message: "Unauthorized access, no access token provided. Please login."});
-        }
-        try {
-            const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-            const user = await User.findById(decoded.userId).select('-password');
+	try {
+		const token = req.cookies.accessToken;
+		if (!token) {
+			return res.status(401).json({ message: "Not authenticated" });
+		}
 
-            if(!user){
-                return res.status(401).json({message: "Unauthorized access, user not found."});
-            }
-            req.user = user;
-            next();
-        } catch (error) {
-            if(error.name = "TokenExpiredError"){
-                return res.status(401).json({message: "Access token expired, please login again."});
-            } 
-            throw error;
-        }
-    } catch (error) {
-        console.error("Error in protectRoute middleware:", error.message);
-        res.status(500).json({message: "Internal server error in protectRoute middleware."});
-    }
-}
+		const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+		const user = await User.findById(decoded.userId).select("-password");
+
+		if (!user) {
+			return res.status(401).json({ message: "User not found" });
+		}
+
+		req.user = user;
+		next();
+	} catch (error) {
+		if (error.name === "TokenExpiredError") {
+			return res.status(401).json({ message: "Access token expired" });
+		}
+		console.error("Auth middleware error:", error.message);
+		return res.status(401).json({ message: "Invalid token" });
+	}
+};
 
 export const adminRoute = (req, res, next) => {
-    if(req.user && req.user.role === 'admin'){
-        next();
-    } else{
-        return res.status(403).json({message: "Forbidden access, admin privileges required."});
-    }
-}
+	if (req.user.role === "admin") return next();
+	return res.status(403).json({ message: "Admin access required" });
+};
 
 export const sellerOrAdminRoute = (req, res, next) => {
-    if (req.user && (req.user.role === 'seller' || req.user.role === 'admin')) {
-        next();
-    } else {
-        res.status(403).json({ message: "Not authorized. Seller or Admin access required." });
-    }
+	if (["seller", "admin"].includes(req.user.role)) return next();
+	return res.status(403).json({ message: "Seller or Admin access required" });
 };
