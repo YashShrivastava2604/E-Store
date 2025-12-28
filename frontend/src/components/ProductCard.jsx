@@ -1,53 +1,81 @@
-import toast from "react-hot-toast";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Star } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
+import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 
 const ProductCard = ({ product }) => {
 	const { user } = useUserStore();
 	const { addToCart } = useCartStore();
 
-	const imageUrl =
-		typeof product.image === "string"
-			? product.image
-			: Array.isArray(product.image)
-			? product.image[0]
-			: product.image?.url || "/placeholder.png";
-
-	const handleAddToCart = () => {
+	const handleAddToCart = async () => {
 		if (!user) {
-			toast.error("Please login to add products to cart", { id: "login" });
+			toast.error("Please login to add items to cart");
 			return;
-		} else {
-			addToCart(product);
-			toast.success(`${product.name} added to cart!`);
+		}
+		try {
+			await addToCart(product._id);
+			toast.success("Added to cart!");
+		} catch (error) {
+			toast.error("Failed to add item");
 		}
 	};
 
 	return (
-		<motion.div 
-			className="w-full h-full bg-white flex flex-col rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
-			whileHover={{ y: -5 }}
+		<motion.div
+			className='bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden h-full flex flex-col'
+			whileHover={{ y: -4 }}
+			transition={{ duration: 0.3 }}
 		>
-			<div className="relative h-64 overflow-hidden rounded-t-2xl group">
-				<img className="object-cover w-full h-full" src={imageUrl} alt={product.name || "Product image"}/>
+			{/* Image Container */}
+			<div className='relative overflow-hidden h-48 sm:h-56 bg-gray-100 group'>
+				<img
+					src={product.image}
+					alt={product.name}
+					className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
+					loading="lazy"
+				/>
+				{product.isFeatured && (
+					<div className='absolute top-3 right-3 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-semibold'>
+						Featured
+					</div>
+				)}
 			</div>
-			<div className="p-5 flex-grow flex flex-col justify-between">
-				<div>
-					<h5 className="text-xl font-bold tracking-tight text-gray-900">{product.name}</h5>
-					<p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+
+			{/* Content */}
+			<div className='p-4 flex-1 flex flex-col'>
+				<h3 className='font-bold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2 hover:text-emerald-600'>
+					{product.name}
+				</h3>
+
+				<p className='text-gray-600 text-xs sm:text-sm line-clamp-2 flex-1 mb-3'>
+					{product.description}
+				</p>
+
+				{/* Rating */}
+				<div className='flex items-center gap-1 mb-3'>
+					<div className='flex gap-0.5'>
+						{[...Array(5)].map((_, i) => (
+							<Star key={i} size={14} className='fill-yellow-400 text-yellow-400' />
+						))}
+					</div>
+					<span className='text-xs text-gray-500'>(128)</span>
 				</div>
-				<div className="mt-4 flex items-center justify-between">
-					<p className="text-2xl font-bold text-emerald-600">${product.price}</p>
-					<button
-						className="flex items-center justify-center rounded-lg bg-emerald-600 p-2.5 text-center text-sm font-medium
-						text-white hover:bg-emerald-700 transition-colors"
+
+				{/* Price and Button */}
+				<div className='flex justify-between items-center mt-auto pt-3 border-t border-gray-100'>
+					<div className='text-lg sm:text-xl font-bold text-emerald-600'>
+						₹{Math.round(product.price)}
+					</div>
+					<motion.button
 						onClick={handleAddToCart}
-						aria-label="Add to cart"
+						className='bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg transition-colors'
+						whileHover={{ scale: 1.05 }}
+						whileTap={{ scale: 0.95 }}
+						title="Add to cart"
 					>
-						<ShoppingCart size={22} />
-					</button>
+						<ShoppingCart size={18} />
+					</motion.button>
 				</div>
 			</div>
 		</motion.div>

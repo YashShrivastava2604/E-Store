@@ -1,63 +1,34 @@
-// src/components/CategoryItem.jsx
-
-import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CategoryItem.css';
+import { motion } from 'framer-motion';
 
 const CategoryItem = ({ category }) => {
-    const linkRef = useRef(null);
-    const navigate = useNavigate();
+	const navigate = useNavigate();
 
-    const handleClick = (event) => {
-        event.preventDefault(); // Stop the link from navigating instantly
+	const handleClick = () => {
+		navigate("/category" + category.href);
+	};
 
-        const link = linkRef.current;
-        if (!link) return;
-
-        const rect = link.getBoundingClientRect();
-        
-        // Create and position the ripple span
-        const ripple = document.createElement('span');
-        const diameter = Math.max(link.clientWidth, link.clientHeight);
-        const radius = diameter / 2;
-
-        ripple.style.width = ripple.style.height = `${diameter}px`;
-        ripple.style.left = `${event.clientX - rect.left - radius}px`;
-        ripple.style.top = `${event.clientY - rect.top - radius}px`;
-        ripple.classList.add('ripple');
-        
-        // Clear any previous ripples before adding a new one
-        const existingRipple = link.querySelector('.ripple');
-        if (existingRipple) {
-            existingRipple.remove();
-        }
-
-        link.appendChild(ripple);
-
-        // Delay navigation to let the ripple effect be visible
-        setTimeout(() => {
-            navigate("/category" + category.href);
-        }, 300);
-    };
-
-    return (
-        <a 
-            href={"/category" + category.href} 
-            className="living-orb-link"
-            ref={linkRef}
-            onClick={handleClick}
-        >
-            <div className="orb-container">
-                <img
-                    src={category.imageUrl}
-                    alt={category.name}
-                    className="category-image"
-                    loading="lazy"
-                />
-                <h3 className="orb-text">{category.name}</h3>
-            </div>
-        </a>
-    );
+	return (
+		<motion.div
+			onClick={handleClick}
+			className='group cursor-pointer'
+			whileHover={{ y: -5 }}
+			transition={{ duration: 0.3 }}
+		>
+			<div className='relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-xl transition-shadow h-48 md:h-56'>
+				<img
+					src={category.imageUrl}
+					alt={category.name}
+					className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
+					loading="lazy"
+				/>
+				<div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300' />
+				<h3 className='absolute bottom-4 left-4 right-4 text-white font-bold text-lg md:text-xl group-hover:translate-y-0 transition-transform'>
+					{category.name}
+				</h3>
+			</div>
+		</motion.div>
+	);
 };
 
 export default CategoryItem;
