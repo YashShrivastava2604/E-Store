@@ -31,6 +31,11 @@ export const adminRoute = (req, res, next) => {
 	return res.status(403).json({ message: "Admin access required" });
 };
 
+export const sellerRoute = (req, res, next) => {
+	if (req.user.role === "seller") return next();
+	return res.status(403).json({ message: "Seller access required" });
+};
+
 export const sellerOrAdminRoute = (req, res, next) => {
 	if (["seller", "admin"].includes(req.user.role)) return next();
 	return res.status(403).json({ message: "Seller or Admin access required" });
