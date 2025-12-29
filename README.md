@@ -77,6 +77,9 @@ cd frontend
 npm install
 npm run dev
 
+```
+---
+
 ## Author
 Yash Shrivastava
 GitHub: https://github.com/YashShrivastava2604
