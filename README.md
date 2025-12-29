@@ -58,3 +58,29 @@ Backend:
 ```bash
 git clone https://github.com/YashShrivastava2604/E-Store.git
 cd E-Store
+
+Backend:
+cd backend
+npm install
+npm run dev
+
+create a .env file in backend
+MONGO_URI=your_mongodb_uri
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+STRIPE_SECRET_KEY=your_stripe_secret_key
+NODE_ENV=development
+
+
+Frontend:
+cd frontend
+npm install
+npm run dev
+
+## Author
+Yash Shrivastava
+GitHub: https://github.com/YashShrivastava2604
+
+LinkedIn: https://www.linkedin.com/in/yash-shrivastava-89a311322/
+
+Email: reach.yashshrivastava@gmail.com
