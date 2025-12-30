@@ -5,14 +5,19 @@ import FeaturedProducts from "../components/FeaturedProducts";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
+import jeans from '../images/jeans.jpg';
+import tshirts from '../images/tshirts.jpg';
+import glasses from '../images/glasses.jpg';
+import jackets from '../images/jackets.jpg';
+import suits from '../images/suits.jpg';
 
 const categories = [
-	{ href: "/jeans", name: "Jeans", imageUrl: "https://images.unsplash.com/photo-1542272604-787c62d465d1?w=300&h=300&fit=crop" },
-	{ href: "/t-shirts", name: "T-shirts", imageUrl: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop" },
+	{ href: "/jeans", name: "Jeans", imageUrl: `${jeans}?w=300&h=300&fit=crop` },
+	{ href: "/t-shirts", name: "T-shirts", imageUrl:`${tshirts}?w=300&h=300&fit=crop` },
 	{ href: "/shoes", name: "Shoes", imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop" },
-	{ href: "/glasses", name: "Glasses", imageUrl: "https://images.unsplash.com/photo-1527563566122-32cd814901d7?w=300&h=300&fit=crop" },
-	{ href: "/jackets", name: "Jackets", imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16ebc5?w=300&h=300&fit=crop" },
-	{ href: "/suits", name: "Suits", imageUrl: "https://images.unsplash.com/photo-1591047990118-85d88b6ccc13?w=300&h=300&fit=crop" },
+	{ href: "/glasses", name: "Glasses", imageUrl: `${glasses}?w=300&h=300&fit=crop` },
+	{ href: "/jackets", name: "Jackets", imageUrl: `${jackets}?w=300&h=300&fit=crop` },
+	{ href: "/suits", name: "Suits", imageUrl: `${suits}?w=300&h=300&fit=crop` },
 	{ href: "/bags", name: "Bags", imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop" },
 ];
 
@@ -26,9 +31,8 @@ const HomePage = () => {
 
 	return (
 		<div className='w-full'>
-			{/* ===== HERO SECTION ===== */}
 			<section className='relative w-full py-20 md:py-32 overflow-hidden'>
-				<div className='absolute inset-0 bg-gradient-to-r from-emerald-50 via-white to-blue-50 opacity-60' />
+				<div className='absolute inset-0 bg-black/10 backdrop-blur-3xl opacity-60' />
 
 				<div className='relative z-10 container mx-auto px-4 sm:px-6 lg:px-8'>
 					<motion.div
@@ -68,11 +72,9 @@ const HomePage = () => {
 				</div>
 			</section>
 
-			{/* ===== FEATURED PRODUCTS ===== */}
-			<FeaturedProducts featuredProducts={products} />
 
 			{/* ===== CATEGORIES SECTION ===== */}
-			<section id='categories' className='w-full py-20 bg-gray-50'>
+			<section id='categories' className='w-full py-20 bg-gray-50/10'>
 				<div className='container mx-auto px-4 sm:px-6 lg:px-8'>
 					<motion.div
 						className='text-center mb-16'
@@ -106,6 +108,10 @@ const HomePage = () => {
 					</motion.div>
 				</div>
 			</section>
+
+			
+			{/* ===== FEATURED PRODUCTS ===== */}
+			<FeaturedProducts featuredProducts={products} />
 
 			{/* ===== CTA SECTION ===== */}
 			<motion.section

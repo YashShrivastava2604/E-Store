@@ -42,7 +42,7 @@ function App() {
 	const showFooter = location.pathname === "/";
 
 	return (
-		<div className='min-h-screen bg-white text-gray-800 font-sans'>
+		<div className='min-h-screen bg-gradient-to-r from-emerald-200/80 via-amber-100/10 to-slate-300 text-gray-800 font-sans'>
 			{!isAuthPage && <Navbar />}
 			<main className={!isAuthPage ? "pt-20" : ""}>
 				<Routes>

@@ -21,7 +21,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
 	}
 
 	return (
-		<section className='w-full py-16 bg-gradient-to-br from-gray-50 to-white'>
+		<section className='w-full py-16 bg-black/10'>
 			<div className='container mx-auto px-4 sm:px-6 lg:px-8'>
 				<motion.div
 					className='mb-12'

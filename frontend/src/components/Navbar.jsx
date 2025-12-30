@@ -23,17 +23,17 @@ const Navbar = () => {
 	};
 
 	return (
-		<header className='fixed top-0 left-0 w-full bg-white shadow-sm z-50 border-b border-gray-100'>
+		<header className='fixed top-0 left-0 w-full bg-gray-900/60 backdrop-blur-md shadow-sm z-50 border-b border-gray-100'>
 			<div className='container mx-auto px-4 sm:px-6 lg:px-8'>
 				<div className='flex justify-between items-center h-16 md:h-20'>
-					<Link to='/' className='text-2xl md:text-3xl font-bold text-emerald-600 flex-shrink-0'>
+					<Link to='/' className='text-2xl md:text-3xl font-bold text-emerald-500 flex-shrink-0'>
 						E-Store
 					</Link>
 
 					{/* Desktop Navigation */}
 					<nav className='hidden md:flex items-center gap-2 lg:gap-4'>
 						{user && (
-							<Link to={"/cart"} className='relative p-2 text-gray-600 hover:text-emerald-600 transition-colors'>
+							<Link to={"/cart"} className='relative p-2 text-white/90 hover:text-emerald-600 transition-colors'>
 								<ShoppingCart size={24} />
 								{cart.length > 0 && (
 									<span className='absolute top-0 right-0 bg-emerald-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold'>
