@@ -11,13 +11,23 @@ import glasses from '../images/glasses.jpg';
 import jackets from '../images/jackets.jpg';
 import suits from '../images/suits.jpg';
 
+// const categories = [
+// 	{ href: "/jeans", name: "Jeans", imageUrl: `${jeans}?w=300&h=300&fit=crop` },
+// 	{ href: "/t-shirts", name: "T-shirts", imageUrl:`${tshirts}?w=300&h=300&fit=crop` },
+// 	{ href: "/shoes", name: "Shoes", imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop" },
+// 	{ href: "/glasses", name: "Glasses", imageUrl: `${glasses}?w=300&h=300&fit=crop` },
+// 	{ href: "/jackets", name: "Jackets", imageUrl: `${jackets}?w=300&h=300&fit=crop` },
+// 	{ href: "/suits", name: "Suits", imageUrl: `${suits}?w=300&h=300&fit=crop` },
+// 	{ href: "/bags", name: "Bags", imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop" },
+// ];
+
 const categories = [
-	{ href: "/jeans", name: "Jeans", imageUrl: `${jeans}?w=300&h=300&fit=crop` },
-	{ href: "/t-shirts", name: "T-shirts", imageUrl:`${tshirts}?w=300&h=300&fit=crop` },
+	{ href: "/jeans", name: "Jeans", imageUrl: "/jeans.jpg" },
+	{ href: "/t-shirts", name: "T-shirts", imageUrl:"/tshirts.jpg" },
 	{ href: "/shoes", name: "Shoes", imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop" },
-	{ href: "/glasses", name: "Glasses", imageUrl: `${glasses}?w=300&h=300&fit=crop` },
-	{ href: "/jackets", name: "Jackets", imageUrl: `${jackets}?w=300&h=300&fit=crop` },
-	{ href: "/suits", name: "Suits", imageUrl: `${suits}?w=300&h=300&fit=crop` },
+	{ href: "/glasses", name: "Glasses", imageUrl: "/glasses.jpg" },
+	{ href: "/jackets", name: "Jackets", imageUrl: "/jackets.jpg" },
+	{ href: "/suits", name: "Suits", imageUrl: "suits.jpg" },
 	{ href: "/bags", name: "Bags", imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop" },
 ];
 
